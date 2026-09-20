@@ -1,0 +1,13 @@
+{
+	"admin/system/velo5x0-fan": {
+		"title": "温度控制",
+		"order": 65,
+		"action": {
+			"type": "view",
+			"path": "velo5x0-fan"
+		},
+		"depends": {
+			"acl": [ "luci-app-velo5x0-fan" ]
+		}
+	}
+}

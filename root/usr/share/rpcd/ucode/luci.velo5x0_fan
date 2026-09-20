@@ -1,0 +1,40 @@
+#!/usr/bin/ucode
+'use strict';
+
+import { readfile, glob } from 'fs';
+
+function temperature(path) {
+	let v = trim(readfile(path) || '');
+	return v ? (+v / 1000) : null;
+}
+
+function status() {
+	let sensors = [];
+	for (let h in glob('/sys/class/hwmon/hwmon*')) {
+		let name = trim(readfile(h + '/name') || '');
+		if (name != 'coretemp' && name != 'ath10k_hwmon')
+			continue;
+		for (let p in glob(h + '/temp*_input')) {
+			let value = temperature(p);
+			if (value != null)
+				push(sensors, {
+					source: name == 'coretemp' ? 'cpu' : 'wifi',
+					sensor: substr(p, rindex(p, '/') + 1),
+					label: trim(readfile(replace(p, /_input$/, '_label')) || ''),
+					value: value
+				});
+		}
+	}
+	let duty = trim(readfile('/tmp/velo5x0-fan.duty') || '');
+	return {
+		running: system('/etc/init.d/velo5x0-fan status >/dev/null 2>&1') == 0,
+		duty: duty ? +duty : null,
+		sensors: sensors
+	};
+}
+
+return {
+	'luci.velo5x0_fan': {
+		status: { call: status }
+	}
+};

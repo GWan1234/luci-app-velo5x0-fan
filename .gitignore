@@ -1,0 +1,5 @@
+/tests/
+/test/
+*.apk
+*.ipk
+*.ucb

@@ -1,0 +1,12 @@
+{
+	"luci-app-velo5x0-fan": {
+		"description": "Temperature control for VeloCloud 5x0",
+		"read": {
+			"ubus": { "luci.velo5x0_fan": [ "status" ] },
+			"uci": [ "velo5x0" ]
+		},
+		"write": {
+			"uci": [ "velo5x0" ]
+		}
+	}
+}

@@ -1,0 +1,32 @@
+#!/bin/sh
+# Share the board's UCI file without replacing other sections or existing curves.
+if uci -q get 'velo5x0.@fan[0]' >/dev/null; then
+	exit 0
+fi
+
+[ -e /etc/config/velo5x0 ] || touch /etc/config/velo5x0
+section=$(uci add velo5x0 fan) || exit 1
+uci batch <<EOF
+set velo5x0.$section.mode='curve'
+set velo5x0.$section.curve_profile='linear'
+set velo5x0.$section.tach='0'
+set velo5x0.$section.temp_src='cpu'
+set velo5x0.$section.temp_mode='max'
+set velo5x0.$section.temp_sensor='temp2_input'
+set velo5x0.$section.period='3'
+set velo5x0.$section.min_duty='40'
+set velo5x0.$section.manual_duty='80'
+set velo5x0.$section.t_min='45'
+set velo5x0.$section.t_max='60'
+set velo5x0.$section.off_below='42'
+set velo5x0.$section.on_above='45'
+set velo5x0.$section.curve_t1='45'
+set velo5x0.$section.curve_d1='40'
+set velo5x0.$section.curve_t2='50'
+set velo5x0.$section.curve_d2='110'
+set velo5x0.$section.curve_t3='55'
+set velo5x0.$section.curve_d3='180'
+set velo5x0.$section.curve_t4='60'
+set velo5x0.$section.curve_d4='255'
+EOF
+uci commit velo5x0
