@@ -41,16 +41,28 @@ const SpeedSlider = form.RangeSliderValue.extend({
 function sensorLabel(sensor) {
 	if (sensor.source == 'wifi')
 		return 'WiFi';
+	if (sensor.source == 'emc')
+		return _('主板温度');
+	if (sensor.source == 'cpu' && !sensor.sensor && !sensor.label)
+		return _('CPU 温度');
 	const core = /^Core\s+(\d+)$/.exec(sensor.label || '');
 	return core ? _('CPU 核心') + ' ' + core[1] : 'CPU ' + (sensor.label || sensor.sensor);
 }
 
 function statusNodes(state) {
+	const sensors = state.sensors || [];
+	const visible = sensors.filter(sensor => sensor.source != 'emc' && sensor.source != 'cpu');
+	const cpu = sensors.filter(sensor => sensor.source == 'cpu' && Number.isFinite(sensor.value));
+	if (cpu.length)
+		visible.unshift({ source: 'cpu', value: Math.max(...cpu.map(sensor => sensor.value)) });
+	const board = sensors.filter(sensor => sensor.source == 'emc' && Number.isFinite(sensor.value));
+	if (board.length)
+		visible.push({ source: 'emc', value: Math.max(...board.map(sensor => sensor.value)) });
 	return [
 		E('strong', {}, state.running ? _('控制服务运行中') : _('控制服务未运行')),
 		E('span', {}, ' · ' + _('当前输出 PWM') + ' ' + (state.duty == null ? '-' : Math.round(state.duty * 100 / 255) + '%')),
 		E('div', { style: 'display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:8px' },
-			(state.sensors || []).map(function(sensor) {
+			visible.map(function(sensor) {
 				return E('span', {}, sensorLabel(sensor) + ': ' + sensor.value.toFixed(1) + ' °C');
 			}))
 	];

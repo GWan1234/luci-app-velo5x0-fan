@@ -1,11 +1,20 @@
 #!/usr/bin/ucode
 'use strict';
 
-import { readfile, glob } from 'fs';
+import { readfile, glob, popen } from 'fs';
 
 function temperature(path) {
 	let v = trim(readfile(path) || '');
 	return v ? (+v / 1000) : null;
+}
+
+function emcRegister(reg) {
+	let pipe = popen(sprintf('/usr/sbin/i2cget -y 9 0x2f 0x%02x 2>/dev/null', reg), 'r');
+	if (!pipe)
+		return null;
+	let value = trim(pipe.read('all') || '');
+	let code = pipe.close();
+	return code == 0 && match(value, /^0x[0-9a-fA-F]{2}$/) ? hex(value) : null;
 }
 
 function status() {
@@ -23,6 +32,20 @@ function status() {
 					label: trim(readfile(replace(p, /_input$/, '_label')) || ''),
 					value: value
 				});
+		}
+	}
+	// EMC2104 is accessed through i2c-dev, not registered as a hwmon device.
+	if (emcRegister(0xfd) == 0x1d) {
+		for (let reg in [0x00, 0x02, 0x04]) {
+			let high = emcRegister(reg);
+			let low = emcRegister(reg + 1);
+			if (high == null || low == null || high == 0x80)
+				continue;
+			push(sensors, {
+				source: 'emc',
+				sensor: sprintf('0x%02x', reg),
+				value: (high > 127 ? high - 256 : high) + (low >> 5) * 0.125
+			});
 		}
 	}
 	let duty = trim(readfile('/tmp/velo5x0-fan.duty') || '');
