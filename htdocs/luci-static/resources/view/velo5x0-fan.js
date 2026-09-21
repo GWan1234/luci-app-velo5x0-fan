@@ -40,7 +40,7 @@ const SpeedSlider = form.RangeSliderValue.extend({
 
 function sensorLabel(sensor) {
 	if (sensor.source == 'wifi')
-		return 'WiFi';
+		return _('WiFi 温度');
 	if (sensor.source == 'emc')
 		return _('主板温度');
 	if (sensor.source == 'cpu' && !sensor.sensor && !sensor.label)
