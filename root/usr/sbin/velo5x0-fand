@@ -122,6 +122,19 @@ while :; do
 				[ "$temp_mode" = max ] && [ "$v" -gt "$temp" ] && temp=$v
 			done
 		done
+		if [ "$temp_src" = cpu_wifi_max ] || [ "$temp_src" = cpu_wifi_avg ]; then
+			for r in 0x00 0x02 0x04; do
+				hi=$(G $r); lo=$(G $((r + 1)))
+				[ -n "$hi" ] && [ -n "$lo" ] || continue
+				h=$(printf %d "$hi" 2>/dev/null) || continue
+				[ "$h" -eq 128 ] && continue
+				frac=$(( ($(printf %d "$lo" 2>/dev/null) >> 5) * 125 ))
+				[ "$h" -gt 127 ] && h=$((h - 256))
+				v=$((h * 1000 + frac))
+				if [ "$temp_mode" = avg ]; then total=$((total + v)); count=$((count + 1)); fi
+				[ "$temp_mode" = max ] && [ "$v" -gt "$temp" ] && temp=$v
+			done
+		fi
 		[ "$temp_mode" = avg ] && [ "$count" -gt 0 ] && temp=$((total / count))
 		temp=$(( temp / 1000 ))
 	else
