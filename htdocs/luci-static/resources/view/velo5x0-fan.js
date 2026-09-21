@@ -72,16 +72,44 @@ function withHelp(opt, text) {
 	const render = opt.renderWidget;
 	opt.renderWidget = function() {
 		const node = render.apply(this, arguments);
-		const help = E('abbr', {
+		const bubble = E('span', {
+			role: 'tooltip',
+			style: 'display:none;position:absolute;right:0;top:calc(100% + 4px);z-index:20;width:max-content;max-width:280px;padding:6px 8px;border:1px solid #888;border-radius:4px;background:#fff;color:#222;box-shadow:0 2px 8px rgba(0,0,0,.25);font-size:.9em;line-height:1.4;white-space:normal'
+		}, text);
+		let pinned = false;
+		function show() {
+			bubble.style.display = 'block';
+		}
+		function hide() {
+			if (!pinned)
+				bubble.style.display = 'none';
+		}
+		const help = E('button', {
+			type: 'button',
 			class: 'velo5x0-help',
-			title: text,
 			'aria-label': text,
+			'aria-expanded': 'false',
 			tabindex: '0',
-			style: 'display:inline-flex;align-items:center;justify-content:center;width:1.25em;height:1.25em;border:1px solid currentColor;border-radius:50%;font-size:.8em;text-decoration:none;cursor:help;flex:0 0 auto'
+			style: 'display:inline-flex;align-items:center;justify-content:center;width:1.25em;height:1.25em;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:inherit;font:inherit;font-size:.8em;line-height:1;cursor:help;flex:0 0 auto'
 		}, '?');
+		help.addEventListener('mouseenter', show);
+		help.addEventListener('mouseleave', hide);
+		help.addEventListener('focus', show);
+		help.addEventListener('blur', hide);
+		help.addEventListener('click', function(event) {
+			event.preventDefault();
+			pinned = !pinned;
+			help.setAttribute('aria-expanded', pinned ? 'true' : 'false');
+			if (pinned)
+				show();
+			else
+				bubble.style.display = 'none';
+		});
+		bubble.addEventListener('mouseenter', show);
+		bubble.addEventListener('mouseleave', hide);
 		return E('span', {
-			style: 'display:flex;align-items:center;gap:6px;width:100%;max-width:100%'
-		}, [node, help]);
+			style: 'position:relative;display:flex;align-items:center;gap:6px;width:100%;max-width:100%'
+		}, [node, E('span', { style: 'position:relative;display:inline-flex;flex:0 0 auto' }, [help, bubble])]);
 	};
 	return opt;
 }
@@ -148,9 +176,9 @@ return view.extend({
 		o = automatic(option('control', form.ListValue, 'temp_src', _('温度源'), 'cpu'));
 		o.value('cpu', _('CPU 温度'));
 		o.value('wifi', _('WiFi 温度'));
+		o.value('emc', _('主板温度'));
 		o.value('cpu_wifi_max', _('CPU / WiFi /主板最高温'));
 		o.value('cpu_wifi_avg', _('CPU / WiFi /主板平均温'));
-		o.value('emc', _('主板温度'));
 		o = withHelp(o, _('选择自动调速使用的温度；组合选项会把 CPU、WiFi 和主板传感器一起计算。'));
 		temperature('control', 'on_above', _('起转温度 (°C)'), '45');
 		o = temperature('control', 't_max', _('满速温度 (°C)'), '60');
