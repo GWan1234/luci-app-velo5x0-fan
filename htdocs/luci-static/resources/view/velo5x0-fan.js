@@ -119,6 +119,11 @@ return view.extend({
 			return Number(value) > Number(s.getOption('on_above').formvalue(id)) ||
 				_('满速温度必须高于起转温度');
 		};
+		o = temperature('control', 'off_below', _('停转温度 (°C，0 为常转)'), '42');
+		o.validate = function(id, value) {
+			return Number(value) == 0 || Number(value) < Number(s.getOption('on_above').formvalue(id)) ||
+				_('停转温度必须低于起转温度');
+		};
 		o = speed('min_duty', _('低温风速'), 40, 'advanced');
 		o.depends({ mode: 'curve', curve_profile: 'linear' });
 
@@ -132,11 +137,6 @@ return view.extend({
 		(data[1].sensors || []).filter(x => x.source == 'cpu').forEach(function(sensor) {
 			o.value(sensor.sensor, sensorLabel(sensor));
 		});
-		o = temperature('advanced', 'off_below', _('停转温度 (°C，0 为常转)'), '42');
-		o.validate = function(id, value) {
-			return Number(value) == 0 || Number(value) < Number(s.getOption('on_above').formvalue(id)) ||
-				_('停转温度必须低于起转温度');
-		};
 		o = automatic(option('advanced', form.ListValue, 'curve_profile', _('风速曲线'), 'linear'));
 		o.forcewrite = true;
 		o.value('linear', _('线性升速'));
